@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TitikTengah — Break the Dorm Food Bermuda Triangle</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              red: '#E11D48',
+              crimson: '#BE123C',
+              gold: '#F59E0B',
+              amber: '#D97706',
+              orange: '#EA580C',
+              dark: '#0F172A',
+              card: '#FFFFFF',
+              cream: '#FFFDF9',
+              warmgray: '#F8F6F0'
+            }
+          },
+          fontFamily: {
+            heading: ['"Plus Jakarta Sans"', 'sans-serif'],
+            sans: ['Inter', 'sans-serif']
+          },
+          boxShadow: {
+            'glow-red': '0 10px 30px -10px rgba(225, 29, 72, 0.4)',
+            'glow-gold': '0 10px 30px -10px rgba(245, 158, 11, 0.4)',
+            'bento': '0 12px 32px -8px rgba(15, 23, 42, 0.08)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #FAF8F5;
+      color: #0F172A;
+      overflow-x: hidden;
+    }
+    h1, h2, h3, h4, .font-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #F1EFEA;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #D1D5DB;
+      border-radius: 9999px;
+    }
+    .ticket-edge {
+      background-image: radial-gradient(circle at 0 50%, transparent 12px, #FFFFFF 13px),
+                        radial-gradient(circle at 100% 50%, transparent 12px, #FFFFFF 13px);
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.8)); }
+    }
+    .animate-pulse-glow {
+      animation: pulseGlow 2.5s infinite ease-in-out;
+    }
+    .triangle-canvas {
+      touch-action: none;
+    }
+  </style>
+</head>
+<body class="selection:bg-brand-red selection:text-white">
+
+  <!-- Toast Notification Center -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-amber-100 shadow-sm transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Logo & Concept Badging -->
+      <div class="flex items-center gap-3">
+        <a href="#" class="flex items-center gap-2 group">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-brand-crimson to-brand-orange flex items-center justify-center text-white shadow-glow-red group-hover:rotate-6 transition-transform">
+            <i data-lucide="crosshair" class="w-6 h-6 stroke-[2.5]"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-2xl font-black tracking-tight text-brand-dark font-heading">Titik<span class="text-brand-red">Tengah</span></span>
+              <span class="text-[10px] bg-amber-100 text-brand-amber font-bold px-2 py-0.5 rounded-full border border-amber-200 uppercase tracking-wider">Dorm Beta</span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium">Bermuda Triangle Food Solver</p>
+          </div>
+        </a>
+      </div>
+
+      <!-- Drop-Point Selector Hub -->
+      <div class="hidden md:flex items-center bg-slate-50 border border-slate-200 rounded-2xl p-1.5 shadow-inner">
+        <div class="flex items-center gap-2 px-3 text-xs font-semibold text-slate-500">
+          <i data-lucide="map-pin" class="w-4 h-4 text-brand-red"></i>
+          <span>YOUR DROP HUB:</span>
+        </div>
+        <select id="hubSelector" onchange="switchHub(this.value)" class="bg-white text-xs font-bold text-slate-800 rounded-xl px-3 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-red cursor-pointer">
+          <option value="Hub-A">📍 North Dorm Gate (Smart Locker #A)</option>
+          <option value="Hub-B">📍 East Tower Resident Lounge (Rack #B)</option>
+          <option value="Hub-C">📍 West Campus Library Entrance Box</option>
+          <option value="Hub-D">📍 South Varsity Quad Locker #D</option>
+        </select>
+      </div>
+
+      <!-- Action Nav Items -->
+      <div class="flex items-center gap-3">
+        <!-- Digital Locker Ticket Trigger Button -->
+        <button onclick="openTicketModal()" id="ticketBadgeBtn" class="relative flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-xl transition-all shadow-sm">
+          <i data-lucide="ticket" class="w-4 h-4 text-brand-orange"></i>
+          <span class="hidden sm:inline">My Locker Ticket</span>
+          <span class="inline sm:hidden">Ticket</span>
+          <span id="activeTicketIndicator" class="flex h-2.5 w-2.5 relative">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+        </button>
+
+        <!-- Cart Trigger Button -->
+        <button onclick="toggleCartDrawer(true)" class="relative flex items-center gap-2.5 bg-brand-red hover:bg-brand-crimson text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-glow-red transition-all transform active:scale-95">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+          <span id="cartNavCount" class="bg-white text-brand-red text-xs px-2 py-0.5 rounded-full font-black">0</span>
+          <span id="cartNavTotal" class="hidden sm:inline font-bold">$0.00</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION with Interactive Bermuda Triangle Widget -->
+  <section class="relative pt-10 pb-16 lg:py-20 overflow-hidden bg-gradient-to-b from-amber-50/50 via-white to-[#FAF8F5]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Top Announcement Pill -->
+      <div class="flex justify-center mb-6">
+        <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200/80 rounded-full px-4 py-1.5 shadow-sm">
+          <span class="flex h-2 w-2 rounded-full bg-brand-red animate-ping"></span>
+          <span class="text-xs font-bold text-brand-crimson uppercase tracking-wider">🔥 Today's Guest Star Cult Drop Is Open</span>
+          <span class="text-slate-300">|</span>
+          <span class="text-xs font-semibold text-slate-600 hidden sm:inline">Window closes in <span id="heroCutoffTimer" class="font-bold text-slate-900">01:42:15</span></span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <!-- Hero Text Copy -->
+        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-brand-dark tracking-tight leading-[1.1] font-heading">
+            Break the Dorm Food <br class="hidden sm:inline">
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-red via-brand-orange to-brand-gold">
+              Bermuda Triangle.
+            </span>
+          </h1>
+          <p class="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed">
+            Every college student knows the curse: <span class="font-bold text-slate-900">If it's cheap, it's mid. If it's close, it's overpriced. If it's legendary, it's 14km away with a $5 delivery fee.</span>
+          </p>
+          <p class="text-sm sm:text-base text-slate-700 font-semibold bg-amber-50/80 border-l-4 border-amber-500 p-3.5 rounded-r-xl max-w-xl">
+            🎯 <span class="text-amber-900">TitikTengah schedules daily legendary batch pickups.</span> We pool 50 orders into one courier van, slashing your delivery cost to <strong>$0.35</strong> and dropping food straight into your heated dorm locker.
+          </p>
+
+          <!-- Quick Proof Stats -->
+          <div class="pt-2 grid grid-cols-3 gap-4 max-w-md mx-auto lg:mx-0">
+            <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-bento text-center">
+              <div class="text-2xl font-black text-brand-red font-heading">$0.35</div>
+              <div class="text-[11px] font-semibold text-slate-500 uppercase mt-0.5">Pooled Delivery</div>
+            </div>
+            <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-bento text-center">
+              <div class="text-2xl font-black text-brand-gold font-heading">100%</div>
+              <div class="text-[11px] font-semibold text-slate-500 uppercase mt-0.5">Far-Away Cult Gems</div>
+            </div>
+            <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-bento text-center">
+              <div class="text-2xl font-black text-emerald-600 font-heading">2 Min</div>
+              <div class="text-[11px] font-semibold text-slate-500 uppercase mt-0.5">Walk to Locker Hub</div>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3.5 justify-center lg:justify-start pt-2">
+            <a href="#daily-drop" class="inline-flex items-center justify-center gap-2 bg-brand-red hover:bg-brand-crimson text-white px-7 py-3.5 rounded-2xl font-bold shadow-glow-red transition-all transform hover:-translate-y-0.5 text-sm sm:text-base">
+              <span>View Today's Drop & Order</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+            <button onclick="scrollToCalculator()" class="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200/90 px-6 py-3.5 rounded-2xl font-bold transition-all shadow-sm text-sm sm:text-base">
+              <i data-lucide="calculator" class="w-4 h-4 text-brand-orange"></i>
+              <span>See the $0.35 Math</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Triangle Physics Visualizer -->
+        <div class="lg:col-span-5">
+          <div class="bg-white border-2 border-amber-200/80 rounded-3xl p-6 sm:p-7 shadow-2xl relative overflow-hidden">
+            <!-- Header for widget -->
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-crimson">Interactive Experiment</span>
+                <h2 class="text-lg font-black text-slate-900 font-heading">The Student Food Trilemma</h2>
+              </div>
+              <span class="bg-slate-100 text-slate-600 text-xs font-semibold px-2.5 py-1 rounded-lg">Try Clicking Vertices</span>
+            </div>
+
+            <!-- Triangle SVG Simulation Board -->
+            <div class="relative w-full aspect-square max-w-[360px] mx-auto bg-gradient-to-b from-amber-50/30 to-orange-50/20 rounded-2xl border border-dashed border-amber-300 p-2 flex items-center justify-center">
+              
+              <!-- SVG Visual Representation -->
+              <svg id="triangleSvg" viewBox="0 0 320 280" class="w-full h-full select-none">
+                <!-- Triangle Edges -->
+                <polygon points="160,35 40,240 280,240" fill="rgba(254, 243, 199, 0.4)" stroke="#F59E0B" stroke-width="2.5" stroke-dasharray="4 4" />
+                
+                <!-- Center Sweet Spot Circle (Titik Tengah) -->
+                <circle id="sweetSpotHalo" cx="160" cy="170" r="28" fill="rgba(225, 29, 72, 0.15)" stroke="#E11D48" stroke-width="1.5" stroke-dasharray="2 2" class="transition-all duration-500" />
+                <circle cx="160" cy="170" r="7" fill="#E11D48" />
+
+                <!-- Corner 1: Tasty (Top) -->
+                <g class="cursor-pointer group" onclick="movePinTo('tasty')">
+                  <circle cx="160" cy="35" r="18" fill="#FEE2E2" stroke="#DC2626" stroke-width="2" />
+                  <text x="160" y="39" font-size="11" font-weight="bold" fill="#991B1B" text-anchor="middle">TASTY</text>
+                  <text x="160" y="15" font-size="9.5" font-weight="700" fill="#DC2626" text-anchor="middle">Cult Flavor (14km away)</text>
+                </g>
+
+                <!-- Corner 2: Cheap (Bottom Left) -->
+                <g class="cursor-pointer group" onclick="movePinTo('cheap')">
+                  <circle cx="40" cy="240" r="18" fill="#FEF3C7" stroke="#D97706" stroke-width="2" />
+                  <text x="40" y="244" font-size="10.5" font-weight="bold" fill="#92400E" text-anchor="middle">CHEAP</text>
+                  <text x="40" y="268" font-size="9" font-weight="700" fill="#B45309" text-anchor="middle">Broke-friendly ($1.50)</text>
+                </g>
+
+                <!-- Corner 3: Close (Bottom Right) -->
+                <g class="cursor-pointer group" onclick="movePinTo('close')">
+                  <circle cx="280" cy="240" r="18" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2" />
+                  <text x="280" y="244" font-size="10.5" font-weight="bold" fill="#3730A3" text-anchor="middle">CLOSE</text>
+                  <text x="280" y="268" font-size="9" font-weight="700" fill="#4338CA" text-anchor="middle">50m Outside Gate</text>
+                </g>
+
+                <!-- Moving State Pin -->
+                <g id="interactivePin" transform="translate(160, 170)" class="transition-all duration-700 ease-out">
+                  <circle r="14" fill="#0F172A" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))" />
+                  <circle r="6" fill="#FBBF24" />
+                </g>
+              </svg>
+            </div>
+
+            <!-- Dynamic State Result Description Box -->
+            <div id="triangleFeedbackBox" class="mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-center transition-all duration-300">
+              <span id="triangleFeedbackBadge" class="inline-block text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white mb-1.5">
+                TITIKTENGAH ACTIVATED
+              </span>
+              <p id="triangleFeedbackText" class="text-xs sm:text-sm font-bold text-slate-800 leading-snug">
+                🎯 The Sweet Spot: Cross-town cult food + $0.35 pooled batch delivery + waiting in your dorm locker!
+              </p>
+            </div>
+
+            <!-- Action to Snap Center -->
+            <div class="mt-3 flex gap-2">
+              <button onclick="snapToTitikTengah()" class="w-full py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white text-xs font-bold rounded-xl shadow-glow-red hover:opacity-95 transition-all flex items-center justify-center gap-1.5">
+                <i data-lucide="crosshair" class="w-4 h-4"></i>
+                <span>Snap to TitikTengah (The Solver)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- SPLIT DELIVERY FEE CALCULATOR SECTION -->
+  <section id="math-calculator" class="py-14 bg-white border-y border-amber-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mx-auto text-center space-y-3 mb-10">
+        <span class="text-xs font-extrabold uppercase tracking-wider text-brand-orange bg-orange-100 px-3 py-1 rounded-full border border-orange-200">
+          Transparent Logistics Engine
+        </span>
+        <h2 class="text-3xl sm:text-4xl font-black text-brand-dark font-heading">
+          Why Solo Delivery Is Highway Robbery
+        </h2>
+        <p class="text-sm sm:text-base text-slate-600">
+          A 14-kilometer one-way ride costs $4.00+ on regular apps. When 50 dorm mates order through TitikTengah, one courier van collects everything. You split the driver fee together.
+        </p>
+      </div>
+
+      <!-- Comparison Card Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        
+        <!-- Option A: Standard Solo App Order -->
+        <div class="bg-slate-50 border border-slate-200 rounded-3xl p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-xs font-bold text-slate-400 uppercase">Standard Solo App</span>
+                <h3 class="text-xl font-black text-slate-800 font-heading">You Order Alone</h3>
+              </div>
+              <span class="text-xs font-bold bg-rose-100 text-rose-700 px-2.5 py-1 rounded-lg">Wallet Drain 💸</span>
+            </div>
+
+            <div class="space-y-2 text-sm text-slate-600 pt-2 border-t border-slate-200">
+              <div class="flex justify-between">
+                <span>Downtown Smoked Beef Meal</span>
+                <span class="font-bold text-slate-800">$7.50</span>
+              </div>
+              <div class="flex justify-between text-rose-600 font-medium">
+                <span>Cross-Town Courier (14 km)</span>
+                <span class="font-bold">+$3.80</span>
+              </div>
+              <div class="flex justify-between text-rose-600 font-medium">
+                <span>Platform + Weather Surge Fee</span>
+                <span class="font-bold">+$1.00</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-6 border-t border-slate-200 mt-6 flex items-baseline justify-between">
+            <span class="text-sm font-semibold text-slate-500">Your Solo Total:</span>
+            <div class="text-3xl font-black text-slate-900 font-heading">$12.30</div>
+          </div>
+        </div>
+
+        <!-- Option B: TitikTengah Pooled Batch -->
+        <div class="bg-gradient-to-br from-amber-500/10 via-brand-red/5 to-white border-2 border-brand-red rounded-3xl p-6 sm:p-7 shadow-glow-red relative flex flex-col justify-between">
+          <div class="absolute -top-3.5 right-6 bg-brand-red text-white text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
+            RECOMMENDED: SAVE 36%
+          </div>
+
+          <div class="space-y-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-xs font-black text-brand-crimson uppercase">TitikTengah Drop</span>
+                <h3 class="text-xl font-black text-slate-900 font-heading">Pooled Batch Delivery</h3>
+              </div>
+              <span class="text-xs font-bold bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-lg">Super Smart 🧠</span>
+            </div>
+
+            <div class="space-y-2 text-sm text-slate-700 pt-2 border-t border-amber-200/70">
+              <div class="flex justify-between">
+                <span>Downtown Smoked Beef Meal</span>
+                <span class="font-bold text-slate-900">$7.50</span>
+              </div>
+              <div class="flex justify-between text-emerald-700 font-semibold">
+                <span class="flex items-center gap-1.5">
+                  <span>Pooled Van Driver Share</span>
+                  <span class="text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.2 rounded font-bold">Split by 45+</span>
+                </span>
+                <span class="font-bold" id="calculatedSplitFee">+$0.35</span>
+              </div>
+              <div class="flex justify-between text-emerald-700 font-semibold">
+                <span>Platform Surcharge</span>
+                <span class="font-bold text-emerald-600">$0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-6 border-t border-amber-200/70 mt-6 flex items-baseline justify-between">
+            <span class="text-sm font-semibold text-slate-600">Your TitikTengah Total:</span>
+            <div class="text-3xl font-black text-brand-crimson font-heading" id="calculatedTotalTitik">$7.85</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Interactive Batch Volume Slider -->
+      <div class="max-w-2xl mx-auto mt-8 bg-amber-50/70 border border-amber-200 rounded-2xl p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+          <label for="poolSizeSlider" class="text-xs font-bold uppercase tracking-wider text-slate-700">
+            Simulate Dorm Batch Size: <span id="poolSizeDisplay" class="font-black text-brand-crimson text-sm">45 Students</span>
+          </label>
+          <span class="text-xs text-slate-500 font-medium">Van courier flat cost: $16.00</span>
+        </div>
+        <input id="poolSizeSlider" type="range" min="10" max="60" value="45" step="1" oninput="updateCalculator(this.value)" class="w-full accent-brand-red cursor-pointer h-2 bg-amber-200 rounded-lg">
+        <div class="flex justify-between text-[11px] font-semibold text-slate-400 mt-1">
+          <span>10 students ($1.60/ea)</span>
+          <span>30 students ($0.53/ea)</span>
+          <span>50+ students ($0.32/ea)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DAILY GUEST STAR DROP LINEUP -->
+  <section id="daily-drop" class="py-16 bg-[#FAF8F5]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Section Title & Day Selector Tabs -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="bg-brand-red text-white text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+              Weekly Drop Schedule
+            </span>
+            <span class="text-xs font-bold text-slate-500">Curated Far-Away Cult Restaurants</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-black text-slate-900 font-heading">
+            This Week’s Guest Star Drops
+          </h2>
+        </div>
+
+        <!-- Weekday Navigation Tabs -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
+          <button onclick="selectDay('mon')" id="tab-mon" class="day-tab px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-brand-dark text-white shadow-md transition-all whitespace-nowrap">
+            Mon (Today 🔥)
+          </button>
+          <button onclick="selectDay('tue')" id="tab-tue" class="day-tab px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all whitespace-nowrap">
+            Tue: Chinatown Claypot
+          </button>
+          <button onclick="selectDay('wed')" id="tab-wed" class="day-tab px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all whitespace-nowrap">
+            Wed: Cult Smash Burgers
+          </button>
+          <button onclick="selectDay('thu')" id="tab-thu" class="day-tab px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all whitespace-nowrap">
+            Thu: Grandma's Braised Noodles
+          </button>
+          <button onclick="selectDay('fri')" id="tab-fri" class="day-tab px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all whitespace-nowrap">
+            Fri: Midnight Crispy Duck
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN FEATURED DROP OF THE DAY CARD -->
+      <div class="bg-white border-2 border-amber-200 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-bento mb-12 relative overflow-hidden">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          <!-- Food Media & Distance Tag -->
+          <div class="lg:col-span-5 relative group">
+            <div class="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 relative">
+              <img id="featuredDropImg" src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80" alt="Smoked Beef" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/800x600/1e293b/ffffff?text=Cult+Food+Drop'">
+              
+              <!-- Distance Badge Overlay -->
+              <div class="absolute top-3 left-3 bg-slate-900/85 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-lg">
+                <i data-lucide="navigation" class="w-3.5 h-3.5 text-brand-orange"></i>
+                <span id="featuredDistance">13.8 km Across Town</span>
+              </div>
+
+              <!-- Travel Rating Badge -->
+              <div class="absolute bottom-3 left-3 right-3 bg-white/95 backdrop-blur-md p-3 rounded-xl border border-amber-200 shadow-md flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-xs">
+                    9.9
+                  </div>
+                  <div>
+                    <div class="text-[11px] font-black text-slate-900 leading-none">FOOD TRAVEL SCORE</div>
+                    <div class="text-[10px] text-slate-500">Vacuum Seal & Broth Separated</div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md">Magic-Com Warmable</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Drop Info & Live Batch Tipping Meter -->
+          <div class="lg:col-span-7 space-y-6">
+            
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span id="featuredSubtag" class="text-xs font-bold uppercase tracking-wider text-brand-orange">Cult Downtown Smokehouse</span>
+                <h3 id="featuredTitle" class="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
+                  Warung Se’i Sapi Asap & Sambal Matah Legenda
+                </h3>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-semibold text-slate-400 block">Solo Delivery Would Cost</span>
+                <span id="featuredSoloSaved" class="text-sm font-bold text-rose-600 line-through">$4.40 solo</span>
+                <span class="text-sm font-black text-emerald-600 block">TitikTengah: $0.35</span>
+              </div>
+            </div>
+
+            <p id="featuredDesc" class="text-sm text-slate-600 leading-relaxed">
+              Smoked for 10 hours over rambutan wood in Southern District. Legendary charred crust with aromatic balinese sambal matah. Delivered piping warm into heated lockers.
+            </p>
+
+            <!-- BATCH TIPPING PROGRESS METER -->
+            <div class="bg-amber-50/70 border border-amber-300/80 rounded-2xl p-4 sm:p-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-red opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-brand-red"></span>
+                  </span>
+                  <span class="text-xs font-extrabold uppercase tracking-wide text-slate-900">
+                    Live Batch Tipping Meter
+                  </span>
+                </div>
+                <div class="text-xs font-bold text-brand-crimson">
+                  <span id="batchCountCurrent">42</span> / <span id="batchTarget">50</span> Orders to Dispatch!
+                </div>
+              </div>
+
+              <!-- Visual Progress Bar -->
+              <div class="w-full h-4 bg-amber-200/80 rounded-full overflow-hidden p-0.5 shadow-inner">
+                <div id="batchProgressBar" class="h-full bg-gradient-to-r from-brand-orange to-brand-red rounded-full transition-all duration-500" style="width: 84%;"></div>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] font-semibold text-slate-500 mt-2">
+                <span>⚡ 8 more orders unlocks guaranteed $0.35 drop!</span>
+                <button onclick="simulateOrderBoost()" class="text-brand-crimson hover:underline font-bold flex items-center gap-1 cursor-pointer">
+                  <span>+1 Test Friend Boost</span>
+                  <i data-lucide="zap" class="w-3 h-3"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- MENU ITEMS CARDS -->
+            <div class="space-y-3 pt-2">
+              <h4 class="text-xs font-black uppercase tracking-wider text-slate-400">Select Today's Guest Star Items</h4>
+              
+              <div id="menuItemsContainer" class="space-y-3">
+                <!-- Item 1 -->
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-200 transition-all">
+                  <div class="space-y-0.5">
+                    <div class="font-bold text-slate-900 text-sm">Signature Smoked Beef Bowl with Sambal Matah</div>
+                    <div class="text-xs text-slate-500">120g sliced brisket, fragrant jasmine rice, crispy shallots</div>
+                    <div class="text-xs font-black text-brand-dark">$6.90</div>
+                  </div>
+                  <button onclick="addToCart(1, 'Signature Smoked Beef Bowl with Sambal Matah', 6.90)" class="px-3.5 py-2 bg-white hover:bg-brand-red hover:text-white text-slate-800 text-xs font-bold rounded-xl border border-slate-300 transition-colors shadow-sm flex items-center gap-1.5 active:scale-95">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>Add</span>
+                  </button>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-200 transition-all">
+                  <div class="space-y-0.5">
+                    <div class="font-bold text-slate-900 text-sm">Crispy Ribs Sambal Ijo Rice Bowl</div>
+                    <div class="text-xs text-slate-500">Twice-cooked caramelized ribs with slow-cooked green chili</div>
+                    <div class="text-xs font-black text-brand-dark">$7.40</div>
+                  </div>
+                  <button onclick="addToCart(2, 'Crispy Ribs Sambal Ijo Rice Bowl', 7.40)" class="px-3.5 py-2 bg-white hover:bg-brand-red hover:text-white text-slate-800 text-xs font-bold rounded-xl border border-slate-300 transition-colors shadow-sm flex items-center gap-1.5 active:scale-95">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>Add</span>
+                  </button>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-200 transition-all">
+                  <div class="space-y-0.5">
+                    <div class="font-bold text-slate-900 text-sm">Charred Bone Marrow Broth (Side Pouch)</div>
+                    <div class="text-xs text-slate-500">Separated heat-resistant pouch, rich 12h broth extract</div>
+                    <div class="text-xs font-black text-brand-dark">$2.20</div>
+                  </div>
+                  <button onclick="addToCart(3, 'Charred Bone Marrow Broth', 2.20)" class="px-3.5 py-2 bg-white hover:bg-brand-red hover:text-white text-slate-800 text-xs font-bold rounded-xl border border-slate-300 transition-colors shadow-sm flex items-center gap-1.5 active:scale-95">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>Add</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- COMMUNITY GUEST STAR VOTING LEADERBOARD -->
+  <section class="py-14 bg-white border-t border-amber-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="max-w-3xl mx-auto text-center space-y-3 mb-10">
+        <span class="text-xs font-extrabold uppercase tracking-wider text-brand-crimson bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
+          Democratizing Food Access
+        </span>
+        <h2 class="text-3xl sm:text-4xl font-black text-slate-900 font-heading">
+          Vote for Next Week's Guest Star
+        </h2>
+        <p class="text-sm sm:text-base text-slate-600">
+          Craving a cult spot across the city? Upvote your favorite or submit a hidden gem. The restaurant with the most votes gets booked into next Tuesday's batch run.
+        </p>
+      </div>
+
+      <!-- Voting Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto" id="votingGrid">
+        <!-- Candidate 1 -->
+        <div class="bg-slate-50 border border-slate-200 hover:border-amber-400 rounded-3xl p-6 transition-all shadow-sm flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-lg">16.2 km away</span>
+              <span class="text-xs text-slate-400 font-semibold">Chinatown</span>
+            </div>
+            <h3 class="text-lg font-black text-slate-900 font-heading">Uncle Chen's Hand-Pulled Biang Biang Noodles</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Spicy chili oil poured over chewy ribbon noodles with braised beef brisket.</p>
+          </div>
+          <div class="pt-5 mt-5 border-t border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-600"><span id="votes-1" class="text-base font-black text-slate-900">142</span> votes</span>
+            <button onclick="castVote(1)" class="vote-btn px-4 py-2 bg-white hover:bg-brand-red hover:text-white text-slate-800 text-xs font-bold rounded-xl border border-slate-300 shadow-sm transition-all flex items-center gap-1.5 active:scale-95">
+              <i data-lucide="arrow-big-up" class="w-4 h-4 text-brand-orange"></i>
+              <span>Upvote</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Candidate 2 -->
+        <div class="bg-slate-50 border border-slate-200 hover:border-amber-400 rounded-3xl p-6 transition-all shadow-sm flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-lg">11.8 km away</span>
+              <span class="text-xs text-slate-400 font-semibold">Old Town</span>
+            </div>
+            <h3 class="text-lg font-black text-slate-900 font-heading">Suburban Grandma's 24h Braised Bakso</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Tender marrow-stuffed beef balls with crispy wontons and garlic sambal broth.</p>
+          </div>
+          <div class="pt-5 mt-5 border-t border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-600"><span id="votes-2" class="text-base font-black text-slate-900">128</span> votes</span>
+            <button onclick="castVote(2)" class="vote-btn px-4 py-2 bg-white hover:bg-brand-red hover:text-white text-slate-800 text-xs font-bold rounded-xl border border-slate-300 shadow-sm transition-all flex items-center gap-1.5 active:scale-95">
+              <i data-lucide="arrow-big-up" class="w-4 h-4 text-brand-orange"></i>
+              <span>Upvote</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Candidate 3 -->
+        <div class="bg-slate-50 border border-slate-200 hover:border-amber-400 rounded-3xl p-6 transition-all shadow-sm flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-lg">14.5 km away</span>
+              <span class="text-xs text-slate-400 font-semibold">Harbor District</span>
+            </div>
+            <h3 class="text-lg font-black text-slate-900 font-heading">Tokyo Crust Smashed Wagyu Brioche</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Double smash patties, caramelized miso onions, and tangy homemade secret relish.</p>
+          </div>
+          <div class="pt-5 mt-5 border-t border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-600"><span id="votes-3" class="text-base font-black text-slate-900">96</span> votes</span>
+            <button onclick="castVote(3)" class="vote-btn px-4 py-2 bg-white hover:bg-brand-red hover:text-white text-slate-800 text-xs font-bold rounded-xl border border-slate-300 shadow-sm transition-all flex items-center gap-1.5 active:scale-95">
+              <i data-lucide="arrow-big-up" class="w-4 h-4 text-brand-orange"></i>
+              <span>Upvote</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nominate New Spot Form -->
+      <div class="max-w-xl mx-auto mt-8 bg-amber-50/60 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row gap-2.5">
+        <input id="nominateInput" type="text" placeholder="Got a far-away favorite? Enter restaurant name & neighborhood..." class="flex-1 bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-red">
+        <button onclick="submitNomination()" class="bg-brand-dark hover:bg-slate-800 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl transition-all shadow-sm whitespace-nowrap">
+          Nominate Spot
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- DIGITAL PICKUP LOCKER TICKET MODAL -->
+  <div id="ticketModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-amber-200 transform transition-all">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-brand-crimson to-brand-orange p-5 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+            <i data-lucide="ticket" class="w-5 h-5 text-white"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-base font-heading">Smart Locker Boarding Ticket</h3>
+            <p class="text-[11px] text-amber-100">TitikTengah Batch Dispatch Pass</p>
+          </div>
+        </div>
+        <button onclick="closeTicketModal()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xs">
+          ✕
+        </button>
+      </div>
+
+      <!-- Ticket Body with Perforated Cutouts -->
+      <div class="p-6 space-y-6 relative ticket-edge bg-white">
+        
+        <!-- Pickup Status Stepper -->
+        <div class="space-y-2">
+          <div class="flex justify-between text-xs font-bold text-slate-500">
+            <span>DISPATCH STATUS</span>
+            <span id="ticketStatusLabel" class="text-brand-crimson font-black">VAN DISPATCH EN ROUTE</span>
+          </div>
+          <div class="grid grid-cols-4 gap-1.5 pt-1">
+            <div class="h-2 rounded-full bg-emerald-500"></div>
+            <div class="h-2 rounded-full bg-emerald-500"></div>
+            <div id="step3Bar" class="h-2 rounded-full bg-brand-orange animate-pulse"></div>
+            <div id="step4Bar" class="h-2 rounded-full bg-slate-200"></div>
+          </div>
+          <div class="flex justify-between text-[10px] text-slate-400 font-semibold pt-0.5">
+            <span>Ordered</span>
+            <span>Batch Packed</span>
+            <span class="text-brand-orange font-bold">Transit</span>
+            <span>In Locker</span>
+          </div>
+        </div>
+
+        <!-- Locker Assigned Cubby Card -->
+        <div class="bg-amber-50 border-2 border-dashed border-amber-300 rounded-2xl p-4 text-center space-y-1">
+          <span class="text-[11px] font-black uppercase tracking-wider text-amber-900">Your Assigned Dorm Locker</span>
+          <div class="text-3xl font-black text-brand-dark font-heading tracking-tight" id="ticketLockerId">
+            HUB A — CUBBY #B-07
+          </div>
+          <p class="text-xs text-amber-800 font-semibold">
+            Heated Compartment • Code opens automatically with QR scan
+          </p>
+        </div>
+
+        <!-- Scannable Ticket QR Code Simulation -->
+        <div class="flex flex-col items-center justify-center p-3 bg-slate-50 rounded-2xl border border-slate-200">
+          <svg class="w-36 h-36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Simulated Crisp SVG QR Code -->
+            <rect width="100" height="100" fill="white" rx="8" />
+            <rect x="10" y="10" width="24" height="24" fill="#0F172A" rx="4" />
+            <rect x="14" y="14" width="16" height="16" fill="white" rx="2" />
+            <rect x="18" y="18" width="8" height="8" fill="#0F172A" />
+
+            <rect x="66" y="10" width="24" height="24" fill="#0F172A" rx="4" />
+            <rect x="70" y="14" width="16" height="16" fill="white" rx="2" />
+            <rect x="74" y="18" width="8" height="8" fill="#0F172A" />
+
+            <rect x="10" y="66" width="24" height="24" fill="#0F172A" rx="4" />
+            <rect x="14" y="70" width="16" height="16" fill="white" rx="2" />
+            <rect x="18" y="74" width="8" height="8" fill="#0F172A" />
+
+            <!-- Pattern bits -->
+            <rect x="42" y="14" width="6" height="6" fill="#0F172A" />
+            <rect x="52" y="14" width="6" height="14" fill="#0F172A" />
+            <rect x="42" y="30" width="16" height="6" fill="#0F172A" />
+            <rect x="14" y="42" width="14" height="6" fill="#0F172A" />
+            <rect x="34" y="42" width="6" height="14" fill="#E11D48" />
+            <rect x="46" y="46" width="12" height="12" fill="#E11D48" />
+            <rect x="66" y="42" width="24" height="6" fill="#0F172A" />
+            <rect x="66" y="54" width="8" height="14" fill="#0F172A" />
+            <rect x="80" y="54" width="10" height="6" fill="#0F172A" />
+            <rect x="42" y="66" width="6" height="24" fill="#0F172A" />
+            <rect x="54" y="74" width="20" height="6" fill="#0F172A" />
+            <rect x="60" y="86" width="24" height="6" fill="#0F172A" />
+          </svg>
+          <span class="text-[11px] font-mono text-slate-500 font-bold mt-2" id="ticketOrderRef">#TT-8821-B4</span>
+          <span class="text-[10px] text-slate-400">Scan at kiosk screen outside dorm gate</span>
+        </div>
+
+        <!-- Roommate Delegation & Simulate Delivery Actions -->
+        <div class="space-y-2">
+          <button onclick="delegateTicketToRoommate()" class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95">
+            <i data-lucide="share-2" class="w-4 h-4 text-amber-400"></i>
+            <span>Pass Ticket to Roommate (Copy Link)</span>
+          </button>
+          
+          <button onclick="simulateLockerArrival()" id="simulateArrivalBtn" class="w-full py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+            <span>Simulate "Food Ready in Cubby"</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- CART & CHECKOUT SLIDE-OVER DRAWER -->
+  <div id="cartDrawer" class="fixed inset-0 z-50 overflow-hidden hidden">
+    <!-- Backdrop -->
+    <div onclick="toggleCartDrawer(false)" class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+    
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div class="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between">
+        
+        <!-- Drawer Header -->
+        <div class="p-6 border-b border-slate-200 flex items-center justify-between bg-amber-50/50">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-xl bg-brand-red text-white flex items-center justify-center shadow-sm">
+              <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-black text-lg text-slate-900 font-heading">Your Batch Tray</h3>
+              <p class="text-xs text-slate-500 font-medium" id="cartHubLabel">Drop to: North Dorm Locker Hub</p>
+            </div>
+          </div>
+          <button onclick="toggleCartDrawer(false)" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 text-sm">
+            ✕
+          </button>
+        </div>
+
+        <!-- Items Container -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar" id="cartItemsList">
+          <!-- Dynamically populated or empty message -->
+          <div id="cartEmptyState" class="text-center py-16 space-y-3">
+            <div class="w-16 h-16 bg-amber-100 text-brand-orange rounded-full flex items-center justify-center mx-auto">
+              <i data-lucide="soup" class="w-8 h-8"></i>
+            </div>
+            <h4 class="font-bold text-slate-800">Your Tray is Empty</h4>
+            <p class="text-xs text-slate-500 max-w-xs mx-auto">Add something from today's far-away cult drop to join the pooled courier!</p>
+          </div>
+        </div>
+
+        <!-- Checkout Breakdown & Payment -->
+        <div class="p-6 border-t border-slate-200 bg-slate-50 space-y-4">
+          <div class="space-y-2 text-xs text-slate-600">
+            <div class="flex justify-between font-semibold">
+              <span>Food Subtotal</span>
+              <span id="cartDrawerSubtotal" class="font-bold text-slate-900">$0.00</span>
+            </div>
+            <div class="flex justify-between font-semibold text-emerald-700">
+              <span class="flex items-center gap-1">
+                <span>Shared Courier Fee (45 Students)</span>
+                <i data-lucide="info" class="w-3 h-3 text-slate-400"></i>
+              </span>
+              <span id="cartDrawerCourier" class="font-bold">$0.35</span>
+            </div>
+            <div class="flex justify-between font-semibold text-slate-400">
+              <span>Locker Reservation Fee</span>
+              <span class="font-bold text-emerald-600">FREE</span>
+            </div>
+            <div class="pt-2 border-t border-slate-200 flex justify-between text-base font-black text-slate-900">
+              <span>Total Due</span>
+              <span id="cartDrawerGrandTotal" class="text-brand-crimson text-xl font-heading">$0.35</span>
+            </div>
+          </div>
+
+          <!-- Quick Dorm Balance / QRIS selection -->
+          <div class="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between text-xs font-semibold text-slate-700">
+            <div class="flex items-center gap-2">
+              <i data-lucide="wallet" class="w-4 h-4 text-brand-orange"></i>
+              <span>Dorm Student Card / QRIS</span>
+            </div>
+            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Instant Verification</span>
+          </div>
+
+          <!-- Checkout Button -->
+          <button onclick="processCheckout()" id="checkoutSubmitBtn" class="w-full py-4 bg-gradient-to-r from-brand-red to-brand-crimson hover:from-brand-crimson hover:to-rose-800 text-white font-black text-sm rounded-2xl shadow-glow-red transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:pointer-events-none">
+            <span>Lock In & Get Locker Ticket</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-brand-dark text-slate-300 py-12 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-brand-red flex items-center justify-center text-white">
+              <i data-lucide="crosshair" class="w-5 h-5"></i>
+            </div>
+            <span class="text-xl font-black text-white font-heading">Titik<span class="text-brand-red">Tengah</span></span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Eliminating the college food trilemma. Curating cult dining, aggregating routes, and landing cross-town feasts in dorm lockers for 35 cents.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-black text-white uppercase tracking-wider mb-3">Daily Hubs</h4>
+          <ul class="text-xs space-y-2 text-slate-400">
+            <li>📍 North Dorm Gate Locker #A</li>
+            <li>📍 East Tower Resident Lounge</li>
+            <li>📍 West Campus Library Plaza</li>
+            <li>📍 South Varsity Quad Hall</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-black text-white uppercase tracking-wider mb-3">Safety & Quality</h4>
+          <ul class="text-xs space-y-2 text-slate-400">
+            <li>🔒 Vacuum Sealed Thermal Bags</li>
+            <li>🌡️ UV-C Sanitized Heated Cubbies</li>
+            <li>⚡ Instant Auto-Refund if batch fails</li>
+            <li>🤝 Registered Campus Courier Fleet</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-black text-white uppercase tracking-wider mb-3">Need Help?</h4>
+          <p class="text-xs text-slate-400 mb-3">Questions about locker codes, allergen tags, or roommate ticket sharing?</p>
+          <button onclick="showToast('Support bot active on WhatsApp & Telegram: @TitikTengahHelp', 'info')" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-300 px-3 py-2 rounded-xl border border-slate-700 transition-all flex items-center gap-2">
+            <i data-lucide="message-circle" class="w-4 h-4"></i>
+            <span>Chat Dorm Concierge</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-4">
+        <div>© 2026 TitikTengah Inc. Made for students who refuse to eat sad food.</div>
+        <div class="flex gap-4">
+          <a href="#" class="hover:text-slate-300">Privacy Policy</a>
+          <a href="#" class="hover:text-slate-300">Dorm Hub Partner Application</a>
+          <a href="#" class="hover:text-slate-300">Restaurant Vendor Portal</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // App State Store
+    const state = {
+      currentHub: 'Hub-A',
+      currentHubName: 'North Dorm Gate (Smart Locker #A)',
+      cart: [],
+      batchCount: 42,
+      batchTarget: 50,
+      poolSize: 45,
+      activeTicket: {
+        orderId: 'TT-8821-B4',
+        lockerCubby: 'HUB A — CUBBY #B-07',
+        status: 'TRANSIT',
+        eta: '11:45 AM'
+      },
+      hasActiveOrder: true,
+      votes: {
+        1: 142,
+        2: 128,
+        3: 96
+      },
+      hasVoted: {}
+    };
+
+    // Weekday schedule drops catalog
+    const scheduleCatalog = {
+      mon: {
+        title: "Warung Se’i Sapi Asap & Sambal Matah Legenda",
+        subtag: "Cult Downtown Smokehouse",
+        distance: "13.8 km Across Town",
+        soloSaved: "$4.40 solo",
+        desc: "Smoked for 10 hours over rambutan wood in Southern District. Legendary charred crust with aromatic balinese sambal matah. Delivered piping warm into heated lockers.",
+        img: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80",
+        items: [
+          { id: 1, name: "Signature Smoked Beef Bowl with Sambal Matah", price: 6.90, desc: "120g sliced brisket, fragrant jasmine rice, crispy shallots" },
+          { id: 2, name: "Crispy Ribs Sambal Ijo Rice Bowl", price: 7.40, desc: "Twice-cooked caramelized ribs with slow-cooked green chili" },
+          { id: 3, name: "Charred Bone Marrow Broth", price: 2.20, desc: "Separated heat-resistant pouch, rich 12h broth extract" }
+        ]
+      },
+      tue: {
+        title: "Chinatown Master Lin Golden Claypot Rice",
+        subtag: "Michelin Bib Gourmand Pick",
+        distance: "16.1 km Across Town",
+        soloSaved: "$5.10 solo",
+        desc: "Crispy bottom scorched rice with sweet lap cheong, ginger chicken, and dark aged soy sauce. Packaged in special heat-retentive clay insulation.",
+        img: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1000&q=80",
+        items: [
+          { id: 10, name: "Special Braised Chicken & Mushroom Claypot", price: 7.80, desc: "Crisp crust rice base with marinated shiitake and scallions" },
+          { id: 11, name: "Charred Pork Belly & Lap Cheong Pot", price: 8.20, desc: "Crispy pork crackling with dark sweet caramel glaze" }
+        ]
+      },
+      wed: {
+        title: "Tokyo Smash Patty & Truffle Aioli Buns",
+        subtag: "Underground Hype Burger Joint",
+        distance: "12.4 km Across Town",
+        soloSaved: "$3.90 solo",
+        desc: "Lacy-edged smash patties seared on 450°F chrome griddle. Brioche baked fresh this morning. Separated sauce cups so buns never turn soggy.",
+        img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1000&q=80",
+        items: [
+          { id: 20, name: "Double Wagyu Smash with Truffle Aioli", price: 8.50, desc: "Double smash patty, melted aged cheddar, brioche bun" },
+          { id: 21, name: "Loaded Animal Garlic Herb Fries", price: 3.50, desc: "Crispy skin-on fries with charred onions and signature sauce" }
+        ]
+      },
+      thu: {
+        title: "Grandma Tao Hand-Pulled Beef Ribbon Noodles",
+        subtag: "40-Year Heritage Stall",
+        distance: "15.0 km Across Town",
+        soloSaved: "$4.80 solo",
+        desc: "Stretched to order noodles with five-spice beef shank. Broth is vacuum-sealed in a separate double-walled thermos flask for zero soggy noodles.",
+        img: "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=1000&q=80",
+        items: [
+          { id: 30, name: "Spicy Beef Shank Braised Hand-Pulled Noodle", price: 7.20, desc: "Tender shank slices, bok choy, homemade chili crisps" },
+          { id: 31, name: "Steamed Prawn & Chive Dumplings (6 pcs)", price: 4.80, desc: "Hand-pinched dumplings with aromatic black vinegar dipping" }
+        ]
+      },
+      fri: {
+        title: "Midnight Bebek Madura & Crispy Black Spice",
+        subtag: "East Java Legendary Duck Spot",
+        distance: "17.5 km Across Town",
+        soloSaved: "$5.50 solo",
+        desc: "Slow-braised duck fried to shattering crispness, smothered in authentic caramelized toasted coconut black bumbu. A Friday dorm celebration favorite.",
+        img: "https://images.unsplash.com/photo-1514944298352-f418579589d9?auto=format&fit=crop&w=1000&q=80",
+        items: [
+          { id: 40, name: "Bebek Madura Bumbu Hitam & Nasi Uduk", price: 7.90, desc: "Crispy duck quarter, caramelized herb sauce, aromatic coconut rice" },
+          { id: 41, name: "Crispy Duck Skin Crackers & Sambal Bawang", price: 2.80, desc: "Crunchy seasoned skin with explosive shallot chili" }
+        ]
+      }
+    };
+
+    // Bermuda Triangle Interactive Handler
+    function movePinTo(vertex) {
+      const pin = document.getElementById('interactivePin');
+      const feedbackBadge = document.getElementById('triangleFeedbackBadge');
+      const feedbackText = document.getElementById('triangleFeedbackText');
+      const halo = document.getElementById('sweetSpotHalo');
+
+      halo.setAttribute('stroke', '#D1D5DB');
+
+      if (vertex === 'tasty') {
+        pin.setAttribute('transform', 'translate(160, 35)');
+        feedbackBadge.className = "inline-block text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-500 text-white mb-1.5";
+        feedbackBadge.innerText = "VERTEX: TASTY ONLY";
+        feedbackText.innerHTML = "😭 <strong>Far & Expensive:</strong> 14km downtown trip. Courier costs $4.20 + 45 min wait time. Wallet cries!";
+      } else if (vertex === 'cheap') {
+        pin.setAttribute('transform', 'translate(40, 240)');
+        feedbackBadge.className = "inline-block text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-600 text-white mb-1.5";
+        feedbackBadge.innerText = "VERTEX: CHEAP ONLY";
+        feedbackText.innerHTML = "😐 <strong>Mid / Sad Taste:</strong> Instant cup noodles or plain porridge again. Saves pennies, ruins study motivation!";
+      } else if (vertex === 'close') {
+        pin.setAttribute('transform', 'translate(280, 240)');
+        feedbackBadge.className = "inline-block text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-600 text-white mb-1.5";
+        feedbackBadge.innerText = "VERTEX: CLOSE ONLY";
+        feedbackText.innerHTML = "⚠️ <strong>Close but Overpriced:</strong> Stale campus convenience store sandwich or cafeteria markup!";
+      }
+    }
+
+    function snapToTitikTengah() {
+      const pin = document.getElementById('interactivePin');
+      const feedbackBadge = document.getElementById('triangleFeedbackBadge');
+      const feedbackText = document.getElementById('triangleFeedbackText');
+      const halo = document.getElementById('sweetSpotHalo');
+
+      pin.setAttribute('transform', 'translate(160, 170)');
+      halo.setAttribute('stroke', '#E11D48');
+      halo.classList.add('animate-pulse-glow');
+
+      feedbackBadge.className = "inline-block text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white mb-1.5";
+      feedbackBadge.innerText = "TITIKTENGAH ACTIVATED (SWEET SPOT)";
+      feedbackText.innerHTML = "🎯 <strong>The Solver:</strong> Far-away cult feast + <strong>$0.35 pooled courier</strong> + delivered straight into your dorm gate locker!";
+
+      triggerConfetti();
+      showToast('🎯 Centroid locked! Bermuda Triangle bypassed.', 'success');
+    }
+
+    // Batch Tipping Meter Logic
+    function simulateOrderBoost() {
+      if (state.batchCount < state.batchTarget) {
+        state.batchCount += 1;
+        updateBatchProgressUI();
+        
+        if (state.batchCount >= state.batchTarget) {
+          triggerConfetti();
+          showToast('🚀 BATCH TARGET REACHED! Dispatch officially locked at $0.35!', 'success');
+        } else {
+          showToast(`+1 Friend joined! ${state.batchTarget - state.batchCount} orders left to lock batch.`, 'info');
+        }
+      } else {
+        showToast('Batch is already 100% full & locked for dispatch! 🎉', 'info');
+      }
+    }
+
+    function updateBatchProgressUI() {
+      const counterEl = document.getElementById('batchCountCurrent');
+      const barEl = document.getElementById('batchProgressBar');
+      
+      counterEl.innerText = state.batchCount;
+      const pct = Math.min(100, Math.round((state.batchCount / state.batchTarget) * 100));
+      barEl.style.width = pct + '%';
+
+      if (state.batchCount >= state.batchTarget) {
+        barEl.classList.remove('from-brand-orange', 'to-brand-red');
+        barEl.classList.add('from-emerald-400', 'to-emerald-600');
+      }
+    }
+
+    // Split Delivery Calculator Slider Engine
+    function updateCalculator(val) {
+      state.poolSize = parseInt(val, 10);
+      document.getElementById('poolSizeDisplay').innerText = `${state.poolSize} Students`;
+
+      // Van fixed route price $16.00 divided by students
+      const perStudentShare = (16.0 / state.poolSize).toFixed(2);
+      const totalMealPlusShare = (7.50 + parseFloat(perStudentShare)).toFixed(2);
+
+      document.getElementById('calculatedSplitFee').innerText = `+$${perStudentShare}`;
+      document.getElementById('calculatedTotalTitik').innerText = `$${totalMealPlusShare}`;
+      document.getElementById('cartDrawerCourier').innerText = `$${perStudentShare}`;
+      renderCartDrawerUI();
+    }
+
+    function scrollToCalculator() {
+      document.getElementById('math-calculator').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Day Selection Tab Switcher
+    function selectDay(dayKey) {
+      document.querySelectorAll('.day-tab').forEach(btn => {
+        btn.classList.remove('bg-brand-dark', 'text-white', 'shadow-md');
+        btn.classList.add('bg-white', 'text-slate-600', 'border', 'border-slate-200');
+      });
+
+      const activeBtn = document.getElementById(`tab-${dayKey}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-white', 'text-slate-600', 'border');
+        activeBtn.classList.add('bg-brand-dark', 'text-white', 'shadow-md');
+      }
+
+      const drop = scheduleCatalog[dayKey];
+      if (!drop) return;
+
+      document.getElementById('featuredTitle').innerText = drop.title;
+      document.getElementById('featuredSubtag').innerText = drop.subtag;
+      document.getElementById('featuredDistance').innerText = drop.distance;
+      document.getElementById('featuredSoloSaved').innerText = drop.soloSaved;
+      document.getElementById('featuredDesc').innerText = drop.desc;
+      document.getElementById('featuredDropImg').src = drop.img;
+
+      // Render menu items
+      const menuContainer = document.getElementById('menuItemsContainer');
+      menuContainer.innerHTML = '';
+
+      drop.items.forEach(item => {
+        const itemCard = document.createElement('div');
+        itemCard.className = 'flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-200 transition-all';
+        itemCard.innerHTML = `
+          <div class="space-y-0.5">
+            <div class="font-bold text-slate-900 text-sm">${item.name}</div>
+            <div class="text-xs text-slate-500">${item.desc}</div>
+            <div class="text-xs font-black text-brand-dark">$${item.price.toFixed(2)}</div>
+          </div>
+          <button onclick="addToCart(${item.id}, '${item.name.replace(/'/g, "\\'")}', ${item.price})" class="px-3.5 py-2 bg-white hover:bg-brand-red hover:text-white text-slate-800 text-xs font-bold rounded-xl border border-slate-300 transition-colors shadow-sm flex items-center gap-1.5 active:scale-95">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Add</span>
+          </button>
+        `;
+        menuContainer.appendChild(itemCard);
+      });
+
+      if (window.lucide) lucide.createIcons();
+      showToast(`Loaded ${dayKey.toUpperCase()} guest star drop menu`, 'info');
+    }
+
+    // Cart Management
+    function addToCart(id, name, price) {
+      const existing = state.cart.find(i => i.id === id);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        state.cart.push({ id, name, price, qty: 1 });
+      }
+
+      updateCartBadge();
+      showToast(`Added "${name}" to batch tray! 🍱`, 'success');
+      
+      // Auto bump batch simulator by 1 order
+      if (state.batchCount < state.batchTarget) {
+        state.batchCount += 1;
+        updateBatchProgressUI();
+      }
+    }
+
+    function updateCartBadge() {
+      const totalCount = state.cart.reduce((acc, curr) => acc + curr.qty, 0);
+      const subtotal = state.cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+
+      document.getElementById('cartNavCount').innerText = totalCount;
+      document.getElementById('cartNavTotal').innerText = `$${subtotal.toFixed(2)}`;
+      renderCartDrawerUI();
+    }
+
+    function renderCartDrawerUI() {
+      const container = document.getElementById('cartItemsList');
+      const emptyState = document.getElementById('cartEmptyState');
+      const subtotalEl = document.getElementById('cartDrawerSubtotal');
+      const grandTotalEl = document.getElementById('cartDrawerGrandTotal');
+      const submitBtn = document.getElementById('checkoutSubmitBtn');
+
+      const courierShare = parseFloat((16.0 / state.poolSize).toFixed(2));
+      const subtotal = state.cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+      const grandTotal = subtotal > 0 ? (subtotal + courierShare).toFixed(2) : '0.00';
+
+      subtotalEl.innerText = `$${subtotal.toFixed(2)}`;
+      grandTotalEl.innerText = `$${grandTotal}`;
+
+      if (state.cart.length === 0) {
+        container.innerHTML = '';
+        container.appendChild(emptyState);
+        emptyState.classList.remove('hidden');
+        submitBtn.disabled = true;
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      container.innerHTML = '';
+      submitBtn.disabled = false;
+
+      state.cart.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200';
+        row.innerHTML = `
+          <div class="space-y-0.5 max-w-[210px]">
+            <div class="font-bold text-slate-800 text-xs truncate">${item.name}</div>
+            <div class="text-[11px] text-slate-500 font-semibold">$${item.price.toFixed(2)} each</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="changeQty(${item.id}, -1)" class="w-6 h-6 rounded-lg bg-white border border-slate-300 text-xs font-bold hover:bg-slate-100 flex items-center justify-center">-</button>
+            <span class="text-xs font-black text-slate-800 w-4 text-center">${item.qty}</span>
+            <button onclick="changeQty(${item.id}, 1)" class="w-6 h-6 rounded-lg bg-white border border-slate-300 text-xs font-bold hover:bg-slate-100 flex items-center justify-center">+</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function changeQty(id, delta) {
+      const idx = state.cart.findIndex(i => i.id === id);
+      if (idx !== -1) {
+        state.cart[idx].qty += delta;
+        if (state.cart[idx].qty <= 0) {
+          state.cart.splice(idx, 1);
+        }
+      }
+      updateCartBadge();
+    }
+
+    function toggleCartDrawer(open) {
+      const drawer = document.getElementById('cartDrawer');
+      if (open) {
+        drawer.classList.remove('hidden');
+        renderCartDrawerUI();
+      } else {
+        drawer.classList.add('hidden');
+      }
+    }
+
+    // Checkout Flow & Instant Ticket Generation
+    function processCheckout() {
+      if (state.cart.length === 0) return;
+
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const lockerCubby = `${state.currentHub.toUpperCase()} — CUBBY #B-0${Math.floor(1 + Math.random() * 8)}`;
+      
+      state.activeTicket = {
+        orderId: `TT-${randomNum}-C9`,
+        lockerCubby: lockerCubby,
+        status: 'DISPATCH_CONFIRMED',
+        eta: '11:45 AM'
+      };
+
+      document.getElementById('ticketOrderRef').innerText = `#${state.activeTicket.orderId}`;
+      document.getElementById('ticketLockerId').innerText = state.activeTicket.lockerCubby;
+
+      toggleCartDrawer(false);
+      state.cart = [];
+      updateCartBadge();
+
+      triggerConfetti();
+      openTicketModal();
+      showToast('🎉 Order locked! Your digital heated locker ticket is ready.', 'success');
+    }
+
+    // Locker Ticket Modal Controls
+    function openTicketModal() {
+      document.getElementById('ticketModal').classList.remove('hidden');
+    }
+
+    function closeTicketModal() {
+      document.getElementById('ticketModal').classList.add('hidden');
+    }
+
+    function delegateTicketToRoommate() {
+      const shareUrl = `https://titiktengah.app/ticket/${state.activeTicket.orderId}?hub=${state.currentHub}&code=PASS89`;
+      
+      // Fallback copy execCommand for iframe compatibility
+      const dummy = document.createElement("input");
+      document.body.appendChild(dummy);
+      dummy.value = shareUrl;
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+
+      showToast('📋 Roommate link copied! They can scan and grab your warm food.', 'success');
+    }
+
+    function simulateLockerArrival() {
+      const statusLabel = document.getElementById('ticketStatusLabel');
+      const step3 = document.getElementById('step3Bar');
+      const step4 = document.getElementById('step4Bar');
+      const btn = document.getElementById('simulateArrivalBtn');
+
+      step3.classList.remove('animate-pulse', 'bg-brand-orange');
+      step3.classList.add('bg-emerald-500');
+      step4.classList.remove('bg-slate-200');
+      step4.classList.add('bg-emerald-500', 'animate-pulse');
+
+      statusLabel.className = 'text-emerald-600 font-black';
+      statusLabel.innerText = 'ARRIVED IN HEATED LOCKER CUBBY';
+      btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Food Waiting in Cubby!`;
+      btn.classList.add('bg-emerald-100', 'text-emerald-900', 'pointer-events-none');
+
+      triggerConfetti();
+      showToast('🔔 Ping! Food arrived in heated locker cubby. Scan QR at hub to open.', 'success');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Community Voting Mechanism
+    function castVote(id) {
+      if (state.hasVoted[id]) {
+        showToast('You already voted for this far-away spot today!', 'info');
+        return;
+      }
+
+      state.votes[id] += 1;
+      state.hasVoted[id] = true;
+      document.getElementById(`votes-${id}`).innerText = state.votes[id];
+
+      triggerConfetti();
+      showToast('🙌 Vote recorded! Pushing this restaurant up next week’s drop list.', 'success');
+    }
+
+    function submitNomination() {
+      const input = document.getElementById('nominateInput');
+      const val = input.value.trim();
+      if (!val) {
+        showToast('Please type a restaurant name first.', 'error');
+        return;
+      }
+
+      showToast(`Nomination "${val}" submitted to our drop scout team! 🛵`, 'success');
+      input.value = '';
+    }
+
+    // Hub Switcher Handler
+    function switchHub(hubVal) {
+      state.currentHub = hubVal;
+      const select = document.getElementById('hubSelector');
+      state.currentHubName = select.options[select.selectedIndex].text;
+      
+      document.getElementById('cartHubLabel').innerText = `Drop to: ${state.currentHubName}`;
+      document.getElementById('ticketLockerId').innerText = `${hubVal.toUpperCase()} — CUBBY #B-04`;
+      showToast(`Drop Hub updated to: ${state.currentHubName}`, 'info');
+    }
+
+    // Toast Notification System
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'pointer-events-auto flex items-center gap-2.5 bg-slate-900 text-white text-xs sm:text-sm font-semibold px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 transition-all transform translate-y-3 opacity-0';
+
+      let icon = 'info';
+      if (type === 'success') icon = 'check-circle-2';
+      if (type === 'error') icon = 'alert-triangle';
+
+      toast.innerHTML = `
+        <i data-lucide="${icon}" class="w-4 h-4 ${type === 'success' ? 'text-emerald-400' : type === 'error' ? 'text-rose-400' : 'text-amber-400'}"></i>
+        <span>${message}</span>
+      `;
+
+      container.appendChild(toast);
+      if (window.lucide) lucide.createIcons();
+
+      // Animate In
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-3', 'opacity-0');
+      });
+
+      // Animate Out
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Confetti Burst Trigger
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.8 },
+          colors: ['#E11D48', '#F59E0B', '#10B981', '#EA580C']
+        });
+      }
+    }
+
+    // Live Countdown Timer (Simulated)
+    function startCutoffCountdown() {
+      let secondsLeft = (1 * 3600) + (42 * 60) + 15;
+      const timerEl = document.getElementById('heroCutoffTimer');
+
+      setInterval(() => {
+        if (secondsLeft <= 0) return;
+        secondsLeft--;
+        const h = String(Math.floor(secondsLeft / 3600)).padStart(2, '0');
+        const m = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0');
+        const s = String(secondsLeft % 60).padStart(2, '0');
+        if (timerEl) timerEl.innerText = `${h}:${m}:${s}`;
+      }, 1000);
+    }
+
+    // Window Init
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+      updateBatchProgressUI();
+      startCutoffCountdown();
+      snapToTitikTengah(); // Start with the sweet spot demonstrated!
+    });
+  </script>
+</body>
+</html>
